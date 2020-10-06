@@ -51,7 +51,6 @@ export class Component {
 		this.children = []
 		this._root = null
 		this._range = null
-		this.state = null
 	}
 	setAttribute(name, value) {
 		return (this.props[name] = value)
@@ -76,12 +75,27 @@ export class Component {
 		this._range.deleteContents()
 		this[RENDER_TO_DOM](this._range)
 	}
+	// 更新数据
 	setState(newState) {
-		// 如果state为初始值null
-		if (this.state === null) {
+		// 1. 如果state为初始值null且不是一个对象，则直接更新state的数据为newState
+		if (this.state === null || typeof this.state !== 'object') {
+			this.state = newState
+			this.rerender()
+			return
 		}
-		let merge = function (oldState, newState) {}
-		merge()
+		let merge = function (oldState, newState) {
+			// TODO: 有待优化
+			for (let p in newState) {
+				if (oldState[p] === null || typeof oldState[p] !== 'object') {
+					oldState[p] = newState[p]
+					// 如果是对象，递归执行merge
+				} else {
+					merge(oldState[p], newState[p])
+				}
+			}
+		}
+		merge(this.state, newState)
+		this.rerender()
 	}
 }
 
