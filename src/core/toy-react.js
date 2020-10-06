@@ -12,6 +12,15 @@ class ElementWrapper {
 	}
 	setAttribute(name, value) {
 		this.root.setAttribute(name, value)
+		// 过滤出以on开头的属性
+		if (name.match(/^on([\s\S]+)/)) {
+			// 拿取正则对象分组1并绑定事件
+			this.root.addEventListener(
+				// 将onClick类型的属性名 的Click 的第一个字符小写，以便能正确绑定事件名
+				RegExp.$1.replace(/^[\s\S]/, c => c.toLowerCase()),
+				value
+			)
+		}
 	}
 	appendChild(component) {
 		// this.root.appendChild(component.root)
@@ -41,6 +50,8 @@ export class Component {
 		this.props = Object.create(null)
 		this.children = []
 		this._root = null
+		this._range = null
+		this.state = null
 	}
 	setAttribute(name, value) {
 		return (this.props[name] = value)
@@ -57,7 +68,20 @@ export class Component {
 	// }
 	// 更新dom
 	[RENDER_TO_DOM](range) {
+		this._range = range
 		this.render()[RENDER_TO_DOM](range)
+	}
+	// 重新绘制
+	rerender() {
+		this._range.deleteContents()
+		this[RENDER_TO_DOM](this._range)
+	}
+	setState(newState) {
+		// 如果state为初始值null
+		if (this.state === null) {
+		}
+		let merge = function (oldState, newState) {}
+		merge()
 	}
 }
 

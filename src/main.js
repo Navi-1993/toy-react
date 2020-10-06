@@ -12,10 +12,16 @@ class Mycomponent extends Component {
 			<div>
 				王雪峰的toyReact
 				<h1> my component </h1>
-				<span>
-					{this.state.a.toString()}
-				</span>
+				<span>{this.state.a.toString()}</span>
 				{this.children}
+				<button
+					onClick={() => {
+						this.state.a++
+						this.rerender()
+					}}
+				>
+					add
+				</button>
 			</div>
 		)
 	}
