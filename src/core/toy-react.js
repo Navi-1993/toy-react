@@ -13,13 +13,19 @@ class ElementWrapper {
 	setAttribute(name, value) {
 		this.root.setAttribute(name, value)
 		// 过滤出以on开头的属性
-		if (name.match(/^on([\s\S]+)/)) {
+		if (name.match(/^on([\s\S]+)$/)) {
 			// 拿取正则对象分组1并绑定事件
 			this.root.addEventListener(
 				// 将onClick类型的属性名 的Click 的第一个字符小写，以便能正确绑定事件名
-				RegExp.$1.replace(/^[\s\S]/, c => c.toLowerCase()),
+				RegExp.$1.replace(/^[\s\S]/, c => c.toLowerCase(), value),
 				value
 			)
+		} else {
+			if (name === 'className') {
+				this.root.setAttribute('class', value)
+			} else {
+				this.root.setAttribute(name, value)
+			}
 		}
 	}
 	appendChild(component) {
@@ -70,10 +76,21 @@ export class Component {
 		this._range = range
 		this.render()[RENDER_TO_DOM](range)
 	}
-	// 重新绘制
+	// 重新视图
 	rerender() {
-		this._range.deleteContents()
-		this[RENDER_TO_DOM](this._range)
+		// 1. 保存旧的range
+		let oldRange = this._range
+		// 2. 创建一个新的range
+		let range = document.createRange()
+		// 3. 新range使用旧range的start与end数据
+		range.setStart(oldRange.startContainer, oldRange.startOffset)
+		range.setEnd(oldRange.startContainer, oldRange.startOffset)
+		// 4. 完成新range的插入
+		this[RENDER_TO_DOM](range)
+		// 5. 将旧range的位置移动到新range的endOffset
+		oldRange.setStart(range.endContainer, range.endOffset)
+		// 6. 删除旧的range内容
+		oldRange.deleteContents()
 	}
 	// 更新数据
 	setState(newState) {
@@ -101,10 +118,10 @@ export class Component {
 
 export function createElement(type, attributes, ...children) {
 	let e
-	if (typeof type === 'function') {
-		e = new type()
-	} else {
+	if (typeof type === 'string') {
 		e = new ElementWrapper(type)
+	} else {
+		e = new type()
 	}
 	for (let p in attributes) {
 		e.setAttribute(p, attributes[p])
@@ -112,6 +129,10 @@ export function createElement(type, attributes, ...children) {
 
 	let insertChildren = children => {
 		for (let child of children) {
+			// 如果传入的child是null,则不进行处理
+			if (child === null) {
+				continue
+			}
 			if (typeof child === 'string') {
 				child = new TextWrapper(child)
 			}
